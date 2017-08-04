@@ -4,7 +4,6 @@ import "time"
 import "math/rand"
 import "bytes"
 import "strconv"
-import "fmt"
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -165,7 +164,6 @@ func (d *Deck) removeAt(index int) card {
 		d.cards = append(d.cards[:index], d.cards[index+1:]...)
 		return removedCard
 	}
-	fmt.Print("poop")
 	return card{-1,-1}
 }
 
@@ -250,7 +248,7 @@ func (d *Deck) fillStandardDeck() {
 	if (d.size() == 0){
 		for i := 1; i <= 4; i++ {
 			for j := 1; j <= 13; j++{
-				d.addAtRand (card{i,j})
+				d.addTop (card{j,i})
 			}
 		}
 	}
@@ -315,8 +313,8 @@ func (d *Deck) mixIn(d2 *Deck) {
 //splits Deck into given number of smaller Decks returned as a slice 
 //Number of cards in each returned Deck is equal
 //any remainder cards stay in this Deck
-//returns an empty slice if an invalid divisr is given
-func (d *Deck) split(split int) ([]*Deck) {
+//returns an empty slice if an invalid divisor is given
+func (d *Deck) split(split int) []*Deck {
 	decks := make([]*Deck, split)
 	if (split > 0 && split <= d.size()) {
 		cards := d.size() / split
@@ -324,11 +322,32 @@ func (d *Deck) split(split int) ([]*Deck) {
 		for i := 0; i < split; i++ {
 			decks[i] = NewDeck()
 			for j := 0; j < cards; j++ {
-				decks[i].addTop(d.removeTop())
+				decks[i].addBottom(d.removeTop())
 			}
 		}
 	}
 	return decks
+}
+
+/*----------------------------------------------------------------------*/
+
+//splits Deck evenly into given decks
+//Number of cards in each given Deck isequal
+//any remainder cards stay in this Deck
+//returns a boolean of whether the function had any effect or not
+func (d *Deck) splitInto(decks ...*Deck) bool {
+	split := len(decks)
+	if (split > 0 && split <= d.size()) {
+		cards := d.size() / split
+
+		for i := 0; i < split; i++ {
+			for j := 0; j < cards; j++ {
+				decks[i].addBottom(d.removeTop())
+			}
+		}
+		return true
+	}
+	return false
 }
 
 /*----------------------------------------------------------------------*/
