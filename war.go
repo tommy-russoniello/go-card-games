@@ -1,8 +1,11 @@
 package main
-import "fmt"
-import "os"
-import "bufio"
-import "strings"
+
+import (
+	"fmt"
+	"os"
+	"bufio"
+	"strings"
+)
 
 var trash, deck1, deck2 *Deck
 var player1, player2 string
@@ -10,14 +13,15 @@ var count int
 
 func main(){
 	initialize()
+
 	for {
 		fmt.Println("turn ", count, "...")
-		card1, card2 := drawCards()
-		fmt.Print(player1, "[", deck1.size() + 1, " card(s)] draws: ", card1.toStringWords(), "\n")
-		fmt.Print(player2, "[", deck2.size() + 1, " card(s)] draws: ", card2.toStringWords(), "\n")
+		card1, card2 := drawCards(3)
+
 		roundWinner, roundLoser, winnings := compare(card1, card2)
 		winnings.shuffle()
 		winnings.appendAtBottom(roundWinner)
+
 		fmt.Print(getPlayer(roundWinner), " wins that round!\n")
 		if (roundLoser.empty()) {
 			end(getPlayer(roundWinner))
@@ -33,6 +37,7 @@ func initialize() {
 	player1, _ = reader.ReadString('\n')
 	fmt.Print("Player 2 name: ")
 	player2, _ = reader.ReadString('\n')
+
 	player1 = strings.TrimRight(player1, "\r\n")
 	player2 = strings.TrimRight(player2, "\r\n")
 
@@ -46,9 +51,24 @@ func initialize() {
 	count = 1
 }
 
-func drawCards() (card, card) {
-	card1 := deck1.removeTop()
-	card2 := deck2.removeTop()
+func drawCards(players int, cardTemp ...card) (card, card) {
+	var card1, card2 card
+	if players != 2 {
+		card1 = deck1.removeTop()
+		if players == 1  && cardTemp != nil {
+			card2 = cardTemp[0]
+		}
+	}
+	if players != 1 {
+		card2 = deck2.removeTop()
+		if players == 2 && cardTemp != nil {
+			card1 = cardTemp[0]
+		}
+	}
+
+	bufio.NewReader(os.Stdin).ReadBytes('\n')
+	fmt.Print(player1, "[", deck1.size(), " card(s)] draws: ", card1.toStringWords(), "\n")
+	fmt.Print(player2, "[", deck2.size(), " card(s)] draws: ", card2.toStringWords(), "\n")
 	return card1, card2
 }
 
@@ -61,6 +81,7 @@ func compare(card1 card, card2 card, winningsTemp ...*Deck) (*Deck, *Deck, *Deck
 	}
 	winnings.addTop(card2)
 	winnings.addTop(card1)
+
 	if card1.num == card2.num {
 		return thisIsWar(card1, winnings)
 	} else if card1.num == ACE {
@@ -85,6 +106,7 @@ func compare(card1 card, card2 card, winningsTemp ...*Deck) (*Deck, *Deck, *Deck
 func thisIsWar(c card, winnings *Deck) (*Deck, *Deck, *Deck) {
 	cardType := c.toStringWords()
 	fmt.Print("both have a(n)", cardType[:len(cardType) - 12], "!\n THIS IS WAR -> ")
+	
 	for i := 0; i < 3; i++ {
 		if deck1.size() == 1 {
 			break
@@ -99,23 +121,19 @@ func thisIsWar(c card, winnings *Deck) (*Deck, *Deck, *Deck) {
 			winnings.addTop(deck2.removeTop())
 		}
 	}
-	deck1Size := deck1.size()
-	deck2Size := deck2.size()
-	winningsSize := winnings.size()
-	card1, card2 := c, c
+
+	var card1, card2 card
 	if deck1.empty() && !deck2.empty() {
-		card2 = deck2.removeTop()
-		winningsSize++
+		fmt.Print(winnings.size() + 1, " cards at stake...\n")
+		card1, card2 = drawCards(2, c)
 	} else if deck2.empty() && !deck1.empty() {
-		card1 = deck1.removeTop()
-		winningsSize++
+		fmt.Print(winnings.size() + 1, " cards at stake...\n")
+		card1, card2 = drawCards(1, c)
 	} else {
-		card1, card2 = drawCards()
-		winningsSize += 2
+		fmt.Print(winnings.size() + 2, " cards at stake...\n")
+		card1, card2 = drawCards(3)
 	}
-	fmt.Print(winningsSize, " cards at stake...\n")
-	fmt.Print(player1, "[", deck1Size, " card(s)] draws: ", card1.toStringWords(), "\n")
-	fmt.Print(player2, "[", deck2Size, " card(s)] draws: ", card2.toStringWords(), "\n")
+	
 	return compare(card1, card2, winnings) 
 }
 
@@ -132,14 +150,4 @@ func getPlayer(d *Deck) string {
 	} else {
 		return "oh, shit"
 	}
-}
-
-func print(d *Deck) {
-	var size int
-	if (d == nil) {
-		size = 0
-	} else {
-		size = d.size()
-	}
-	fmt.Println(d.toStringWords(), " size: ", size, "\n")
 }
