@@ -12,16 +12,15 @@ func main(){
 	initialize()
 	for {
 		fmt.Println("turn ", count, "...")
-		var card1, card2 card
-		card1, card2 = drawCards()
-		fmt.Print(player1, "[", deck1.size(), " cards] draws: ", card1.toStringWords(), "\n")
-		fmt.Print(player2, "[", deck2.size(), " cards] draws: ", card2.toStringWords(), "\n")
-		var roundWinner, roundLoser, winnings *Deck
-		roundWinner, roundLoser, winnings = compare(card1, card2)
+		card1, card2 := drawCards()
+		fmt.Print(player1, "[", deck1.size() + 1, " card(s)] draws: ", card1.toStringWords(), "\n")
+		fmt.Print(player2, "[", deck2.size() + 1, " card(s)] draws: ", card2.toStringWords(), "\n")
+		roundWinner, roundLoser, winnings := compare(card1, card2)
+		winnings.shuffle()
 		winnings.appendAtBottom(roundWinner)
-		fmt.Print(getPlayer(roundWinner), " wins!\n")
+		fmt.Print(getPlayer(roundWinner), " wins that round!\n")
 		if (roundLoser.empty()) {
-			end(roundWinner)
+			end(getPlayer(roundWinner))
 		}
 		count++
 	}
@@ -54,10 +53,11 @@ func drawCards() (card, card) {
 }
 
 func compare(card1 card, card2 card, winningsTemp ...*Deck) (*Deck, *Deck, *Deck) {
-	if len(winningsTemp) == 0 {
-		winnings := NewDeck()
+	var winnings *Deck
+	if winningsTemp == nil {
+		winnings = NewDeck()
 	} else {
-		winnings := winningsTemp[0]
+		winnings = winningsTemp[0]
 	}
 	winnings.addTop(card2)
 	winnings.addTop(card1)
@@ -83,7 +83,8 @@ func compare(card1 card, card2 card, winningsTemp ...*Deck) (*Deck, *Deck, *Deck
 }
 
 func thisIsWar(c card, winnings *Deck) (*Deck, *Deck, *Deck) {
-	fmt.Print("both have", c.toStringWords(), "!\n THIS IS WAR\n")
+	cardType := c.toStringWords()
+	fmt.Print("both have a(n)", cardType[:len(cardType) - 12], "!\n THIS IS WAR -> ")
 	for i := 0; i < 3; i++ {
 		if deck1.size() == 1 {
 			break
@@ -98,17 +99,28 @@ func thisIsWar(c card, winnings *Deck) (*Deck, *Deck, *Deck) {
 			winnings.addTop(deck2.removeTop())
 		}
 	}
-	var card1, card2 card
-	card1, card2 = drawCards()
-	fmt.Print(player1, "[", deck1.size(), " cards] draws: ", card1.toStringWords(), "\n")
-	fmt.Print(player2, "[", deck2.size(), " cards] draws: ", card2.toStringWords(), "\n")
-	var winner, loser *Deck
-	winner, loser = compare(card1, card2)
-	return winner, loser, winnings
+	deck1Size := deck1.size()
+	deck2Size := deck2.size()
+	winningsSize := winnings.size()
+	card1, card2 := c, c
+	if deck1.empty() && !deck2.empty() {
+		card2 = deck2.removeTop()
+		winningsSize++
+	} else if deck2.empty() && !deck1.empty() {
+		card1 = deck1.removeTop()
+		winningsSize++
+	} else {
+		card1, card2 = drawCards()
+		winningsSize += 2
+	}
+	fmt.Print(winningsSize, " cards at stake...\n")
+	fmt.Print(player1, "[", deck1Size, " card(s)] draws: ", card1.toStringWords(), "\n")
+	fmt.Print(player2, "[", deck2Size, " card(s)] draws: ", card2.toStringWords(), "\n")
+	return compare(card1, card2, winnings) 
 }
 
-func end(d *Deck) {
-	fmt.Println("blah blah blah player whatever wins")
+func end(player string) {
+	fmt.Println(player, "has all the cards! ", player, " wins!")
 	os.Exit(0)
 }
 

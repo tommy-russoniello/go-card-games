@@ -372,6 +372,7 @@ func (d *Deck) toString() string {
 	var buffer bytes.Buffer
 	for i := 0 ; i < j; i++ {
 		buffer.WriteString(d.cards[i].toString())
+		buffer.WriteString(" | ")
 	}
 	return buffer.String()
 }
@@ -391,7 +392,6 @@ func (c *card) toString() string {
 	}
 	buffer.WriteString(" ")
 	buffer.WriteString(strconv.Itoa(c.suit))
-	buffer.WriteString(" | ")
 	return buffer.String()
 }
 
@@ -406,6 +406,7 @@ func (d *Deck) toStringWords() string {
 	var buffer bytes.Buffer
 	for i := 0 ; i < j; i++ {
 		buffer.WriteString(d.cards[i].toStringWords())
+		buffer.WriteString(" | ")
 	}
 	return buffer.String()
 }
@@ -437,7 +438,6 @@ func (c *card) toStringWords() string {
 	}
 
 	buffer.WriteString(num + " of " + suit)
-	buffer.WriteString(" | ")
 	return buffer.String()
 }
 
