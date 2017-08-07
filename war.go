@@ -7,9 +7,13 @@ import (
 	"strings"
 )
 
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
 var trash, deck1, deck2 *Deck
 var player1, player2 string
 var count int
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 func main(){
 	initialize()
@@ -30,6 +34,8 @@ func main(){
 	}
 
 }
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 /* 
  * take in player names
@@ -54,6 +60,8 @@ func initialize() {
 
 	count = 1
 }
+
+/*----------------------------------------------------------------------*/
 
 /* 
 * players -> players to be affected
@@ -86,6 +94,8 @@ func drawCards(players int, cardTemp ...card) (card, card) {
 	fmt.Print(player2, "[", deck2.size(), " card(s)] draws: ", card2.toStringWords(), "\n")
 	return card1, card2
 }
+
+/*----------------------------------------------------------------------*/
 
 /*
  * card1 -> player 1's card
@@ -130,6 +140,8 @@ func compare(card1 card, card2 card, winningsTemp ...*Deck) (*Deck, *Deck, *Deck
 	}
 }
 
+/*----------------------------------------------------------------------*/
+
 /*
  * c -> card with value that both players drew
  * winnings -> cumulative winnings for round
@@ -173,6 +185,8 @@ func thisIsWar(c card, winnings *Deck) (*Deck, *Deck, *Deck) {
 	return compare(card1, card2, winnings) 
 }
 
+/*----------------------------------------------------------------------*/
+
 /*
  * player -> string of winning player's name
  *
@@ -184,6 +198,8 @@ func end(winnerDeck *Deck) {
 	fmt.Println(player, "has all ", winnerDeck.size(), " cards! ", player, " wins!")
 	os.Exit(0)
 }
+
+/*----------------------------------------------------------------------*/
 
 /*
  * d -> deck of either player
@@ -199,3 +215,5 @@ func getPlayer(d *Deck) string {
 		return "oh, shit"
 	}
 }
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/

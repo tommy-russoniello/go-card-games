@@ -349,15 +349,13 @@ func (d *Deck) sort() {
 	}
 }
 
+/*----------------------------------------------------------------------*/
+
 //shuffles Deck into new random order
 func (d *Deck) shuffle() {
 	for i := 0; i < 3; i++ {
 		d.cards = d.drawRand(d.size())
 	}
-	// s := d.size() * 3
-	// for i := 0; i < s; i++ {
-	// 	d.addAtRand (d.removeRand())
-	// }
 }
 
 /*----------------------------------------------------------------------*/
