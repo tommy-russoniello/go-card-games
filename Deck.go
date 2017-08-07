@@ -1,27 +1,29 @@
 package main
 
-import "time"
-import "math/rand"
-import "bytes"
-import "strconv"
+import (
+	"time"
+	"math/rand"
+	"bytes"
+	"strconv"
+)
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 //card type (num)
 const (
-ACE = 1
-//                       number cards already have correct name
-JACK = 11
-QUEEN = 12
-KING = 13
+	ACE = 1
+	//                       number cards already have correct name
+	JACK = 11
+	QUEEN = 12
+	KING = 13
 )
 
 //card suit
 const (
-SPADES = iota + 1
-HEARTS
-DIAMONDS
-CLUBS
+	SPADES = iota + 1
+	HEARTS
+	DIAMONDS
+	CLUBS
 )
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -63,56 +65,65 @@ func (d *Deck) empty() bool {
 
 /*----------------------------------------------------------------------*/
 
-//inserts given card at specified index
-func (d *Deck) addAt(c card, index int)  {
-	d.cards = append (d.cards, card{-1,-1})
-	copy(d.cards[index+1:], d.cards[index:(len(d.cards) - 1)])
-	d.cards[index] = c
-	
+//inserts given cards at specified index
+//works independently of all other Deck methods
+func (d *Deck) addAt(index int, c ...card)  {
+	if c != nil && index >= 0 && index <= len(d.cards) {
+		count := len(c)
+		for i := 0; i < count; i++ {
+			d.cards = append (d.cards, card{-1,-1})
+		}
+		copy(d.cards[index+count:], d.cards[index:(len(d.cards) - count)])
+		for i := 0; i < count; i++ {
+			d.cards[index + i] = c[i]
+		}
+	}
 }
 
 /*----------------------------------------------------------------------*/
 
-//inserts given card at top of Deck (end of slice)
-func (d *Deck) addTop(c card) {
-	d.addAt(c, d.size())
+//inserts given cards at top of Deck (end of slice)
+func (d *Deck) addTop(c ...card) {
+	d.addAt(d.size(), c...)
 }
 
 /*----------------------------------------------------------------------*/
 
-//inserts given card at bottom of Deck (beginning of slice)
-func (d *Deck) addBottom(c card) {
-	d.addAt(c, 0)
+//inserts given cards at bottom of Deck (beginning of slice)
+func (d *Deck) addBottom(c ...card) {
+	d.addAt(0, c...)
 }
 
 /*----------------------------------------------------------------------*/
 
-//inserts random card at specified index
-	func (d *Deck) addRandAt(index int)  {
-	c := card{d.r.Intn(13) + 1, d.r.Intn(4) + 1}
-	d.addAt(c,index)
+//inserts given number of random cards at specified index
+func (d *Deck) addRandAt(index int, num int)  {
+	var cards []card
+	for i := 0; i < num; i++ {
+		cards = append(cards, card{d.r.Intn(13) + 1, d.r.Intn(4) + 1})
+	}
+	d.addAt(index, cards...)
 }
 
 /*----------------------------------------------------------------------*/
 
-//inserts given card at random index
-func (d *Deck) addAtRand(c card)  {
+//inserts given cards at random index
+func (d *Deck) addAtRand(c ...card)  {
 	if (d.size() != 0){
-		d.addAt(c, d.r.Intn(d.size() + 1))
-	} else {	
-		d.addTop(c)
+		d.addAt(d.r.Intn(d.size() + 1), c...)
+	} else {
+		d.addTop(c...)
 	}	
 }
 
 /*----------------------------------------------------------------------*/
 
-//inserts random card at random index
-func (d *Deck) addRandAtRand()  {
-	c := card{d.r.Intn(13) + 1, d.r.Intn(4) + 1}
+//inserts given number of random cards at random index
+func (d *Deck) addRandAtRand(num int)  {
 	if (d.size() == 0){
-		d.addTop(c)
+		d.addRandAt(0, num)
 	} else {
-		d.addAt(c, d.r.Intn(d.size() + 1))
+		d.addRandAt(d.r.Intn(d.size() + 1), num)
 	}
 }
 
@@ -131,6 +142,21 @@ func (d *Deck) find(c card) int{
 
 /*----------------------------------------------------------------------*/
 
+//returns indexes of all occurrence of given card in Deck starting from top
+//***as int slice
+//returns nil int slice if card is not in Deck
+func (d *Deck) findAll(c card) []int{
+	var indexes []int
+	for i := d.size() - 1; i >= 0; i-- {
+		if(d.cards[i] == c){
+			indexes = append(indexes, i)
+		}
+	}
+	return indexes
+}
+
+/*----------------------------------------------------------------------*/
+
 //returns index of first occurrence of given card in Deck starting from bottom
 //returns -1 if card is not in Deck
 func (d *Deck) findBottom(c card) int{
@@ -140,6 +166,21 @@ func (d *Deck) findBottom(c card) int{
 		}
 	}
 	return -1
+}
+
+/*----------------------------------------------------------------------*/
+
+//returns indexes of all occurrence of given card in Deck starting from bottom
+//***as int slice
+//returns nil int slice if card is not in Deck
+func (d *Deck) findAllBottom(c card) []int{
+	var indexes []int
+	for i, currentCard := range d.cards {
+		if(currentCard == c){
+			indexes = append(indexes, i)
+		}
+	}
+	return indexes
 }
 
 /*----------------------------------------------------------------------*/
@@ -200,6 +241,81 @@ func (d *Deck) removeRand() card {
 
 /*----------------------------------------------------------------------*/
 
+//removes given number of cards from given index in Deck
+//returns slice of removed cards
+//cuts drawing short if index becomes invalid
+//returns nil slice if index does not exist
+func (d *Deck) drawAt(index int, count int) []card {
+	var removedCards []card
+	if (d.checkIndex(index)){
+		trim := count - (d.size() - index)
+		if (trim > 0) {
+			count -= trim
+		}
+		removedCards = append(removedCards, d.cards[index:index + count]...)
+		d.cards = append(d.cards[:index], d.cards[index + count:]...)
+	}
+	return removedCards
+}
+
+/*----------------------------------------------------------------------*/
+
+//removes given number of cards from top of Deck
+//returns slice of removed cards
+//cuts drawing short if index becomes invalid
+//returns nil slice if Deck is empty
+func (d *Deck) drawTop(count int) []card {
+	size := d.size()
+	if count > size {
+		count = size
+	}
+	return d.drawAt(size - count, count)
+}
+
+/*----------------------------------------------------------------------*/
+
+//removes given number of cards from bottom of Deck
+//returns slice of removed cards
+//cuts drawing short if index becomes invalid
+//returns nil slice if Deck is empty
+func (d *Deck) drawBottom(count int) []card {
+	return d.drawAt(0, count)
+}
+
+/*----------------------------------------------------------------------*/
+
+//removes given number of cards from random index of Deck
+//returns slice of removed cards
+//returns nil slice if draw amount is greater than deck size
+func (d *Deck) drawAtRand(count int) []card {
+	size := d.size()
+	var removedCards []card
+	if count <= size {
+		d.drawAt(d.r.Intn(size - (count - 1)), count)
+	}
+	return removedCards
+}
+
+/*----------------------------------------------------------------------*/
+
+//removes given number of random cards from Deck
+//returns removed cards
+//cuts drawing short if draw count is greater than deck size
+//returns nil slice if deck is empty
+func (d *Deck) drawRand(count int) []card {
+	size := d.size()
+	var removedCards []card
+	if count > size {
+		count = size
+	}
+	for i := 0; i < count; i++ {
+		removedCards = append(removedCards, d.removeRand())
+	}
+	return removedCards
+}
+
+/*----------------------------------------------------------------------*/
+
 //returns true if index is valid for Deck
 //returns false if index is invalid for Deck
 //returns false if Deck is empty
@@ -235,10 +351,13 @@ func (d *Deck) sort() {
 
 //shuffles Deck into new random order
 func (d *Deck) shuffle() {
-	s := d.size() * 3
-	for i := 0; i < s; i++ {
-		d.addAtRand (d.removeRand())
+	for i := 0; i < 3; i++ {
+		d.cards = d.drawRand(d.size())
 	}
+	// s := d.size() * 3
+	// for i := 0; i < s; i++ {
+	// 	d.addAtRand (d.removeRand())
+	// }
 }
 
 /*----------------------------------------------------------------------*/

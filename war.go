@@ -24,13 +24,17 @@ func main(){
 
 		fmt.Print(getPlayer(roundWinner), " wins that round!\n")
 		if (roundLoser.empty()) {
-			end(getPlayer(roundWinner))
+			end(roundWinner)
 		}
 		count++
 	}
 
 }
 
+/* 
+ * take in player names
+ * initalize decks and turn count
+ */
 func initialize() {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Player 1 name: ")
@@ -51,6 +55,17 @@ func initialize() {
 	count = 1
 }
 
+/* 
+* players -> players to be affected
+* *** 1 -> player 1
+* *** 2 -> player 2
+* *** 3 -> both players
+* cardTemp -> optional default card for unaffected cards to be set to
+*
+* draws a card from affected players' decks and returns those cards
+* returns cardTemp[0] card for unaffected players
+* waits for user to press 'enter' and then prints players' cards
+*/
 func drawCards(players int, cardTemp ...card) (card, card) {
 	var card1, card2 card
 	if players != 2 {
@@ -72,6 +87,19 @@ func drawCards(players int, cardTemp ...card) (card, card) {
 	return card1, card2
 }
 
+/*
+ * card1 -> player 1's card
+ * card2 -> player 2's card
+ * winningsTemp -> optional cumulative winnings deck
+ * *** used for recursive calls from chained WAR sequences
+ *
+ * adds players cards to winnings deck (may be empty to start)
+ * compares cards' values and returns all decks in this order:
+ * *** 1) deck of the player who won the round
+ * *** 2) deck of the player who lost the round
+ * *** 3) deck of all cards won by the winning player in this round
+ * triggers war if players' cards are equal in value and returns the results
+ */
 func compare(card1 card, card2 card, winningsTemp ...*Deck) (*Deck, *Deck, *Deck) {
 	var winnings *Deck
 	if winningsTemp == nil {
@@ -79,8 +107,7 @@ func compare(card1 card, card2 card, winningsTemp ...*Deck) (*Deck, *Deck, *Deck
 	} else {
 		winnings = winningsTemp[0]
 	}
-	winnings.addTop(card2)
-	winnings.addTop(card1)
+	winnings.addTop(card2, card1)
 
 	if card1.num == card2.num {
 		return thisIsWar(card1, winnings)
@@ -103,19 +130,28 @@ func compare(card1 card, card2 card, winningsTemp ...*Deck) (*Deck, *Deck, *Deck
 	}
 }
 
+/*
+ * c -> card with value that both players drew
+ * winnings -> cumulative winnings for round
+ *
+ * prints out situation
+ * draws up to 3 cards from each deck and adds them to the winnings
+ * *** drawing will stop if player only has 1 card left in their deck
+ * draws one more card from each deck and returns the result of their comparison
+ */
 func thisIsWar(c card, winnings *Deck) (*Deck, *Deck, *Deck) {
 	cardType := c.toStringWords()
 	fmt.Print("both have a(n)", cardType[:len(cardType) - 12], "!\n THIS IS WAR -> ")
-	
+
 	for i := 0; i < 3; i++ {
-		if deck1.size() == 1 {
+		if deck1.size() <= 1 {
 			break
 		} else {
 			winnings.addTop(deck1.removeTop())
 		}
 	}
 	for i := 0; i < 3; i++ {
-		if deck2.size() == 1 {
+		if deck2.size() <= 1 {
 			break
 		} else {
 			winnings.addTop(deck2.removeTop())
@@ -133,15 +169,27 @@ func thisIsWar(c card, winnings *Deck) (*Deck, *Deck, *Deck) {
 		fmt.Print(winnings.size() + 2, " cards at stake...\n")
 		card1, card2 = drawCards(3)
 	}
-	
+
 	return compare(card1, card2, winnings) 
 }
 
-func end(player string) {
-	fmt.Println(player, "has all the cards! ", player, " wins!")
+/*
+ * player -> string of winning player's name
+ *
+ * prints out victory message for winning player
+ * exits program
+ */
+func end(winnerDeck *Deck) {
+	player := getPlayer(winnerDeck)
+	fmt.Println(player, "has all ", winnerDeck.size(), " cards! ", player, " wins!")
 	os.Exit(0)
 }
 
+/*
+ * d -> deck of either player
+ *
+ * returns name of player for given deck
+ */
 func getPlayer(d *Deck) string {
 	if d == deck1 {
 		return player1
